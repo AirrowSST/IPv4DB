@@ -1,7 +1,4 @@
 class IPAddress:
-    def is_valid(cls, ip_address):
-        pass
-        
     def __init__(self, ip_address = 0, 
                  subnet_mask_length: int = 0):  # not needed if ip_address is str in CIDR notation with subnet mask length
         # default values
@@ -9,22 +6,25 @@ class IPAddress:
         self.subnet_mask_length: int = subnet_mask_length  # 0-32
         
         # case 1: argument is int
-        if type(ip_address) is int:
+        if isinstance(ip_address, int):
             self.ip_address = ip_address
             
         # case 2: argument is str
-        elif type(ip_address) is str:
+        elif isinstance(ip_address, str):
             if "/" in ip_address:
                 ip_address, subnet_mask_length_str = ip_address.split("/")
                 self.subnet_mask_length = int(subnet_mask_length_str)
             if "." in ip_address:
                 for i in ip_address.split('.'):
-                    self.ip_address = self.ip_address * 256 + int(i)
+                    if len(i) == 8:  # if binary
+                        self.ip_address = self.ip_address * 256 + int(i, 2)
+                    else:  # if decimal
+                        self.ip_address = self.ip_address * 256 + int(i)
             else:  # assume in binary form
                 self.ip_address = int(ip_address, 2)
                 
         # case 3: argument is IPAdress
-        elif type(ip_address) is IPAddress:
+        elif isinstance(ip_address, IPAddress):
             self.ip_address = ip_address.ip_address
             self.subnet_mask_length = ip_address.subnet_mask_length
             
@@ -34,14 +34,57 @@ class IPAddress:
     
     def __repr__(self):
         str_digits = []
+        ip_address = self.ip_address
         for i in range(4):
-            str_digits.append(str(self.ip_address % 256))
-            self.ip_address //= 256
-        return '.'.join(str_digits[::-1]) + '/' + str(self.subnet_mask_length)
+            str_digits.append(str(ip_address % 256))
+            ip_address //= 256
+        return '.'.join(str_digits[::-1]) + ('/' + str(self.subnet_mask_length)) if self.subnet_mask_length != 0 else ''
+
+    def __eq__(self, other):
+        return self.ip_address == other.ip_address and self.subnet_mask_length == other.subnet_mask_length
+    
+    def __lt__(self, other):
+        return self.ip_address < other.ip_address
+    
+    def __gt__(self, other):
+        return self.ip_address > other.ip_address
+    
+    def __le__(self, other):
+        return self.ip_address <= other.ip_address
+    
+    def __ge__(self, other):
+        return self.ip_address >= other.ip_address
+    
+    def __add__(self, other):
+        if isinstance(other, int):
+            return IPAddress(self.ip_address + other, self.subnet_mask_length)
+        return IPAddress(self.ip_address + other.ip_address)
+    
+    def __sub__(self, other):
+        if isinstance(other, int):
+            return IPAddress(self.ip_address - other, self.subnet_mask_length)
+        return IPAddress(self.ip_address - other.ip_address)
+    
+    def __iadd__(self, other):
+        if isinstance(other, int):
+            self.ip_address += other
+        else:
+            self.ip_address += other.ip_address
+        return self
+    
+    def __isub__(self, other):
+        if isinstance(other, int):
+            self.ip_address -= other
+        else:
+            self.ip_address -= other.ip_address
+        return self
 
 class IPAddressBlock:
-    def __init__(self, network_ip_address):
-        self.network_ip_address = network_ip_address
+    def __init__(self, network_ip_address: IPAddress):
+        self.network_ip_address: IPAddress = network_ip_address
+    
+    def get_lower_range(self):
+        self.network_ip_address.ip_address += 1
 
 class Organization:
     def __init__(self, name, ip_addresses=None):
