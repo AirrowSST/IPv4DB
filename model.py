@@ -16,7 +16,7 @@ class IPAddress:
                 self.subnet_mask_length = int(subnet_mask_length_str)
             if "." in ip_address:
                 for i in ip_address.split('.'):
-                    if len(i) == 8:  # if binary
+                    if len(i) == 8:  # assume in binary form
                         self.ip_address = self.ip_address * 256 + int(i, 2)
                     else:  # if decimal
                         self.ip_address = self.ip_address * 256 + int(i)
@@ -31,6 +31,9 @@ class IPAddress:
         # case 4: argument is of invalid type
         else:
             raise Exception("Invalid argument type")
+        
+    def get_subnet_mask(self):
+        return IPAddress(2 ** 32 - 2 ** (32 - self.subnet_mask_length))
     
     def __repr__(self):
         str_digits = []
@@ -38,7 +41,7 @@ class IPAddress:
         for i in range(4):
             str_digits.append(str(ip_address % 256))
             ip_address //= 256
-        return '.'.join(str_digits[::-1]) + ('/' + str(self.subnet_mask_length)) if self.subnet_mask_length != 0 else ''
+        return '.'.join(str_digits[::-1]) + ('/' + str(self.subnet_mask_length) if self.subnet_mask_length != 0 else '')
 
     def __eq__(self, other):
         return self.ip_address == other.ip_address and self.subnet_mask_length == other.subnet_mask_length
@@ -78,13 +81,30 @@ class IPAddress:
         else:
             self.ip_address -= other.ip_address
         return self
+    
+    # deep copy
+    def copy(self):
+        return IPAddress(self.ip_address, self.subnet_mask_length)
 
 class IPAddressBlock:
     def __init__(self, network_ip_address: IPAddress):
-        self.network_ip_address: IPAddress = network_ip_address
+        self.ip_address: IPAddress = network_ip_address
+        
+    def get_identity_address(self):
+        return self.ip_address.copy()
+
+    def get_broadcast_address(self):
+        return self.ip_address + self.num_usable_addresses()
     
-    def get_lower_range(self):
-        self.network_ip_address.ip_address += 1
+    def lower_bound_address(self):
+        return self.ip_address + 1
+    
+    def upper_bound_address(self):
+        return self.ip_address + self.num_usable_addresses() - 1
+    
+    def num_usable_addresses(self):
+        return 2 ** (32 - self.ip_address.subnet_mask_length)
+    
 
 class Organization:
     def __init__(self, name, ip_addresses=None):
