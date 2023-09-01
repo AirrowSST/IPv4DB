@@ -32,8 +32,18 @@ class IPAddress:
         else:
             raise Exception("Invalid argument type")
         
-    def get_subnet_mask(self):
+    def get_subnet_mask(self) -> 'IPAddress':
         return IPAddress(2 ** 32 - 2 ** (32 - self.subnet_mask_length))
+    
+    # deep copy
+    def get_copy(self) -> 'IPAddress':
+        return IPAddress(self.ip_address, self.subnet_mask_length)
+    
+    def get_network_address(self) -> 'IPAddress':
+        return IPAddress(self.ip_address & self.get_subnet_mask().ip_address)
+    
+    def get_host_address(self) -> 'IPAddress':
+        return IPAddress(self.ip_address & ~self.get_subnet_mask().ip_address)
     
     def __repr__(self):
         str_digits = []
@@ -81,46 +91,51 @@ class IPAddress:
         else:
             self.ip_address -= other.ip_address
         return self
-    
-    # deep copy
-    def copy(self):
-        return IPAddress(self.ip_address, self.subnet_mask_length)
 
 class IPAddressBlock:
     def __init__(self, network_ip_address: IPAddress):
         self.ip_address: IPAddress = network_ip_address
         
-    def get_identity_address(self):
-        return self.ip_address.copy()
+    def get_identity_address(self) -> 'IPAddress':
+        return self.ip_address.get_copy()
 
-    def get_broadcast_address(self):
-        return self.ip_address + self.num_usable_addresses()
+    def get_broadcast_address(self) -> 'IPAddress':
+        return self.ip_address + self.get_num_usable_addresses()
     
-    def lower_bound_address(self):
+    def get_lower_bound_address(self) -> 'IPAddress':
         return self.ip_address + 1
     
-    def upper_bound_address(self):
-        return self.ip_address + self.num_usable_addresses() - 1
+    def get_upper_bound_address(self) -> 'IPAddress':
+        return self.ip_address + self.get_num_usable_addresses() - 1
     
-    def num_usable_addresses(self):
+    def get_num_usable_addresses(self) -> int:
         return 2 ** (32 - self.ip_address.subnet_mask_length)
     
+    def contains(self, ip_address: IPAddress) -> bool:  # checks if an ip address is in the block, including identity and broadcast addresses
+        return self.get_identity_address() <= ip_address <= self.get_broadcast_address()
+    
     def __iter__(self):  # iterates through all addresses in the block except the network and broadcast addresses
-        self.current_address = self.lower_bound_address()
-        self.upper_bound_address = self.upper_bound_address()
+        self.current_address = self.get_lower_bound_address()
+        self.get_upper_bound_address = self.get_upper_bound_address()
         return self
     
     def __next__(self):
-        if self.current_address > self.upper_bound_address:
+        if self.current_address > self.get_upper_bound_address:
             raise StopIteration
         else:
             self.current_address += 1
             return self.current_address - 1
     
+    def __repr__(self):
+        return "Address Block: " + str(self.get_identity_address()) + " (Network ID) - " + str(self.get_broadcast_address())
+    
 class Organization:
-    def __init__(self, name, ip_address_blocks=None):
+    def __init__(self, name, ip_address_blocks: list[IPAddressBlock] = None):
         self.name = name
         self.ip_address_blocks = ip_address_blocks if ip_address_blocks is not None else []
+    
+    def total_usable_ip_addresses(self):
+        return sum([block.get_num_usable_addresses() for block in self.ip_address_blocks])
     
 class Database:
     def __init__(self):
