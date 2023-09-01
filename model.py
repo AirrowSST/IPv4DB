@@ -134,8 +134,14 @@ class Organization:
         self.name: str = name
         self.ip_address_blocks: list[IPAddressBlock] = list(ip_address_blocks) if ip_address_blocks is not None else []
     
-    def total_usable_ip_addresses(self):
+    def total_usable_ip_addresses(self) -> int:
         return sum([block.get_num_usable_addresses() for block in self.ip_address_blocks])
+    
+    def add_ip_address_block(self, ip_address_block: IPAddressBlock) -> None:
+        self.ip_address_blocks.append(ip_address_block)
+        
+    def remove_ip_address_block(self, ip_address_block: IPAddressBlock) -> None:
+        self.ip_address_blocks.remove(ip_address_block)
     
     def __repr__(self):
         return self.name + ": \n" + "\n".join([str(ip_address_block) for ip_address_block in self.ip_address_blocks])
@@ -143,4 +149,16 @@ class Organization:
 class Database:
     def __init__(self):
         self.organizations = []
+    
+    def add_organization(self, organization: Organization) -> None:
+        self.organizations.append(organization)
+    
+    def remove_organization(self, organization: Organization) -> None:
+        self.organizations.remove(organization)
+    
+    def get_organization_by_name(self, name: str) -> Organization:
+        for organization in self.organizations:
+            if organization.name == name:
+                return organization
+        return None
         
