@@ -105,11 +105,22 @@ class IPAddressBlock:
     def num_usable_addresses(self):
         return 2 ** (32 - self.ip_address.subnet_mask_length)
     
-
+    def __iter__(self):  # iterates through all addresses in the block except the network and broadcast addresses
+        self.current_address = self.lower_bound_address()
+        self.upper_bound_address = self.upper_bound_address()
+        return self
+    
+    def __next__(self):
+        if self.current_address > self.upper_bound_address:
+            raise StopIteration
+        else:
+            self.current_address += 1
+            return self.current_address - 1
+    
 class Organization:
-    def __init__(self, name, ip_addresses=None):
+    def __init__(self, name, ip_address_blocks=None):
         self.name = name
-        self.ip_addresses = ip_addresses if ip_addresses is not None else []
+        self.ip_address_blocks = ip_address_blocks if ip_address_blocks is not None else []
     
 class Database:
     def __init__(self):
