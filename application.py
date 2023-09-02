@@ -130,31 +130,34 @@ class BottomFrame(ctk.CTkFrame):  # Allows Searching
         self.app.set_search_results(organizations)
 
 class NetworkCardFrame(ctk.CTkFrame):  # Acts as a card displaying information on a network
-    def __init__(self, master, network, **kwargs):
+    def __init__(self, master, app, network, **kwargs):
         super().__init__(master, **kwargs)
-        self.app: App = master
+        self.app: App = app
+        self.master = master
         self.network = network
         
         # Network Address
         self.label = ctk.CTkLabel(self, 
-                                  text=network.get_network_address())
-        self.label.grid(row=0, column=0, padx=(20, 20), pady=(20, 20), sticky="nsew")
+                                  text=network.get_identity_address())
+        self.grid_columnconfigure(0, weight=1)
+        self.label.grid(row=0, column=0, padx=(10, 10), pady=(10, 10), sticky="nsw")
         
         # Select Button
         self.select_button = ctk.CTkButton(master=self,
                                            text_color=("gray10", "#DCE4EE"),
                                            command=self.select_input,
                                            text="Select")
-        self.select_button.grid(row=1, column=0, padx=(20, 20), pady=(20, 20), sticky="nse")
+        self.select_button.grid(row=0, column=1, padx=(10, 10), pady=(10, 10), sticky="nse")
     
     def select_input(self):
-        pass
+        self.app.set_info_display(self.network)
 
 class OrganizationCardFrame(ctk.CTkFrame):  # Acts as a card displaying information on an organization
-    def __init__(self, master, organization, **kwargs):
+    def __init__(self, master, app, organization: Organization, **kwargs):
         super().__init__(master, **kwargs)
-        self.app: App = master
-        self.organization = organization
+        self.app: App = app
+        self.master = master
+        self.organization: Organization = organization
         self.grid_columnconfigure(0, weight=1)
         
         # Organization Name
@@ -163,17 +166,32 @@ class OrganizationCardFrame(ctk.CTkFrame):  # Acts as a card displaying informat
         self.label.grid(row=0, column=0, padx=(20, 20), pady=(20, 20), sticky="nsw")
         
         # Network Cards
-        #TODO
+        self.network_card_frames: list[NetworkCardFrame] = []
+        self.row_start = 1
+        self.update_network_frames()
         
         # Select Button
         self.select_button = ctk.CTkButton(master=self,
                                            text_color=("gray10", "#DCE4EE"),
                                            command=self.select_input,
                                            text="Select")
-        self.select_button.grid(row=1, column=0, padx=(20, 20), pady=(20, 20), sticky="nse")
+        self.select_button.grid(row=0, column=1, padx=(20, 20), pady=(20, 20), sticky="nse")
     
     def select_input(self):
-        pass
+        self.app.set_info_display(self.organization)
+
+    def update_network_frames(self):
+        for frame in self.network_card_frames:
+            frame.grid_forget()
+            frame.destroy()
+        self.network_card_frames.clear()
+        
+        for ip_address_block in self.organization.ip_address_blocks:
+            frame = NetworkCardFrame(self, self.app, ip_address_block)
+            self.network_card_frames.append(frame)
+        
+        for index, frame in enumerate(self.network_card_frames):
+            frame.grid(row=self.row_start + index, column=0, columnspan=2, padx=(10, 10), pady=(10, 10), sticky="nsew")
 
 class CenterFrame(ctk.CTkScrollableFrame):  # Shows database
     def __init__(self, master, **kwargs):
@@ -191,7 +209,7 @@ class CenterFrame(ctk.CTkScrollableFrame):  # Shows database
         
         organizations = self.app.database.organizations if organizations is None else organizations 
         for organization in organizations:
-            frame = OrganizationCardFrame(self, organization)
+            frame = OrganizationCardFrame(self, self.app, organization)
             self.organization_card_frames.append(frame)
         
         for index, frame in enumerate(self.organization_card_frames):
