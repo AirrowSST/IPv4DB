@@ -53,14 +53,16 @@ class LeftSideBarFrame(ctk.CTkFrame):  # Actions to modify database
         dialog = ctk.CTkInputDialog(text="Organization Name to Add: ", title="Adding Organization")
         self.app.database.add_organization(Organization(dialog.get_input()))
         self.app.reset_search_results()
+        self.app.reset_info_display()
         
     def remove_organiazation_input(self):
         dialog = ctk.CTkInputDialog(text="Organization Name to Remove: ", title="Removing Organization")
         self.app.database.remove_organization(self.app.database.get_organization_by_name(dialog.get_input()))
         self.app.reset_search_results()
+        self.app.reset_info_display()
         
     def show_allocation_details_input(self):
-        pass
+        self.app.reset_info_display()
 
     def change_appearance_mode_event(self, new_appearance_mode: str):
         ctk.set_appearance_mode(new_appearance_mode)
@@ -86,7 +88,14 @@ class RightSideBarFrame(ctk.CTkFrame):  # Shows information on selected item
         self.textbox.configure(state="normal")
         self.textbox.delete("0.0", "end")
         if self.app.info_display is None:
-            self.textbox.insert("0.0", "No item selected")
+            display_str = (
+                f"IP Address Space Allocation Information"
+                + f"\n\nTotal Organizations: {len(self.app.database.organizations)}\n"
+                + f"\n\nTotal IP Addresses in IPv4: 2^32, or {2**32}\n"
+                + f"\n\nTotal IP Addresses Allocated: {self.app.database.total_allocated_ip_addresses()}\n"
+                + f"\n\nTotal Unallocated IP Addresses: {2**32 - self.app.database.total_allocated_ip_addresses()}\n"
+            )
+            self.textbox.insert("0.0", display_str)
         else:
             if isinstance(self.app.info_display, IPAddress):
                 ip_address = self.app.info_display
@@ -97,8 +106,8 @@ class RightSideBarFrame(ctk.CTkFrame):  # Shows information on selected item
                         if ip_address.subnet_mask_length == 0 else ""
                         + f"\n\nNetwork Address: {ip_address.get_network_address()} \n\nHost Address: {ip_address.get_host_address()}"
                         + f"\n\nSubnet Mask: {ip_address.get_subnet_mask()}"
-                        + f"\n\nTotal Addresses in Network: {ip_address_block.get_num_usable_addresses()}"
-                        + f"\n\nUsable Host Addresses in Network: {ip_address_block.get_num_usable_addresses() - 2}"
+                        + f"\n\nTotal Addresses in Network: {ip_address_block.get_num_addresses()}"
+                        + f"\n\nUsable Host Addresses in Network: {ip_address_block.get_num_addresses() - 2}"
                         + f"\n\nUsable Host Address Range: \n{ip_address_block.get_lower_bound_address()} - {ip_address_block.get_upper_bound_address()}"
                         + f"\n\nBroadcast Address: {ip_address_block.get_broadcast_address()}"
                     )
@@ -112,16 +121,20 @@ class RightSideBarFrame(ctk.CTkFrame):  # Shows information on selected item
                         if ip_address_block.get_identity_address().subnet_mask_length == 0 else ""
                         + f"\n\nNetwork Address: {ip_address_block.get_identity_address()}"
                         + f"\n\nSubnet Mask: {ip_address_block.get_identity_address().get_subnet_mask()}"
-                        + f"\n\nTotal Addresses in Network: {ip_address_block.get_num_usable_addresses()}"
-                        + f"\n\nUsable Host Addresses in Network: {ip_address_block.get_num_usable_addresses() - 2}"
+                        + f"\n\nTotal Addresses in Network: {ip_address_block.get_num_addresses()}"
+                        + f"\n\nUsable Host Addresses in Network: {ip_address_block.get_num_addresses() - 2}"
                         + f"\n\nUsable Host Address Range: \n{ip_address_block.get_lower_bound_address()} - {ip_address_block.get_upper_bound_address()}"
                         + f"\n\nBroadcast Address: {ip_address_block.get_broadcast_address()}"
                     )
                 )
                 self.textbox.insert("0.0", display_str)
             elif isinstance(self.app.info_display, Organization):
-                self.textbox.insert("0.0", "Organization\n\n"
-                                    + str(self.app.info_display))
+                organization: Organization = self.app.info_display
+                display_str = (
+                    f"Organization\n\n{organization.name}\n"
+                    + f"\n\nTotal Owned IP Addresses: {organization.total_ip_addresses()}"
+                )
+                self.textbox.insert("0.0", display_str)
         self.textbox.configure(state="disabled")
         
 class BottomFrame(ctk.CTkFrame):  # Allows Searching
@@ -230,6 +243,7 @@ class OrganizationCardFrame(ctk.CTkFrame):  # Acts as a card displaying informat
             return
         self.organization.add_ip_address_block(IPAddressBlock(ip_address))
         self.update_network_frames()
+        self.app.reset_info_display()
     
     def remove_network_input(self):
         dialog = ctk.CTkInputDialog(text="Network IP Address to Remove: ", title="Removing Network")
@@ -240,6 +254,7 @@ class OrganizationCardFrame(ctk.CTkFrame):  # Acts as a card displaying informat
             return
         self.organization.remove_ip_address_block(IPAddressBlock(ip_address))
         self.update_network_frames()
+        self.app.reset_info_display()
 
     def update_network_frames(self):
         for frame in self.network_card_frames:
@@ -336,7 +351,7 @@ class App(ctk.CTk):
         self.info_display = item
         self.right_sidebar_frame.update_textbox()
     
-    def remove_info_display(self):
+    def reset_info_display(self):
         self.info_display = None
         self.right_sidebar_frame.update_textbox()
     

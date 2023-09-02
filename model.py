@@ -128,15 +128,15 @@ class IPAddressBlock:
         return self.ip_address.get_copy()
 
     def get_broadcast_address(self) -> 'IPAddress':
-        return self.ip_address + self.get_num_usable_addresses() - 1
+        return self.ip_address + self.get_num_addresses() - 1
     
     def get_lower_bound_address(self) -> 'IPAddress':
         return self.ip_address + 1
     
     def get_upper_bound_address(self) -> 'IPAddress':
-        return self.ip_address + self.get_num_usable_addresses() - 2
+        return self.ip_address + self.get_num_addresses() - 2
     
-    def get_num_usable_addresses(self) -> int:
+    def get_num_addresses(self) -> int:
         return 2 ** (32 - self.ip_address.subnet_mask_length)
     
     def contains(self, ip_address: IPAddress) -> bool:  # checks if an ip address is in the block, including identity and broadcast addresses
@@ -176,8 +176,8 @@ class Organization:
                 return True
         return False
     
-    def total_usable_ip_addresses(self) -> int:
-        return sum([block.get_num_usable_addresses() for block in self.ip_address_blocks])
+    def total_ip_addresses(self) -> int:
+        return sum([block.get_num_addresses() for block in self.ip_address_blocks])
     
     def add_ip_address_block(self, ip_address_block: IPAddressBlock) -> None:
         self.ip_address_blocks.append(ip_address_block)
@@ -191,6 +191,9 @@ class Organization:
 class Database:
     def __init__(self):
         self.organizations = []
+    
+    def total_allocated_ip_addresses(self) -> int:
+        return sum([organization.total_ip_addresses() for organization in self.organizations])
     
     def add_organization(self, organization: Organization) -> None:
         self.organizations.append(organization)
