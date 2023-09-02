@@ -106,11 +106,12 @@ class BottomFrame(ctk.CTkFrame):  # Allows Searching
         self.search_button.grid(row=0, column=1, padx=(20, 20), pady=(20, 20), sticky="nsew")
 
     def search_input(self):  # handles search input action
-        ip_address, owner, organizations = self.app.database.search_all(self.search_entry.get())
+        ip_address, owner, owner_block, organizations = self.app.database.search_all(self.search_entry.get())
         if ip_address is not None:
             self.app.set_info_display(ip_address)
         elif owner is not None:
             self.app.set_info_display(owner)
+        self.app.set_search_results(organizations)
 
 class NetworkCardFrame(ctk.CTkFrame):  # Acts as a card displaying information on a network
     def __init__(self, master, network, **kwargs):
@@ -166,10 +167,14 @@ class CenterFrame(ctk.CTkScrollableFrame):  # Shows database
         self.grid_columnconfigure(0, weight=1)
         self.update_all()
 
-    def update_all(self):
+    def update_all(self, organizations=None):
+        for frame in self.organization_card_frames:
+            frame.grid_forget()
+            frame.destroy()
         self.organization_card_frames.clear()
         
-        for organization in self.app.database.organizations:
+        organizations = self.app.database.organizations if organizations is None else organizations 
+        for organization in organizations:
             frame = OrganizationCardFrame(self, organization)
             self.organization_card_frames.append(frame)
         
@@ -239,6 +244,12 @@ class App(ctk.CTk):
     def remove_info_display(self):
         self.info_display = None
         self.right_sidebar_frame.update_textbox()
+    
+    def set_search_results(self, organizations):
+        self.center_frame.update_all(organizations)
+        
+    def remove_search_results(self):
+        self.center_frame.update_all()
 
 if __name__ == "__main__":
     app = App()
