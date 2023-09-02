@@ -23,9 +23,14 @@ class LeftSideBarFrame(ctk.CTkFrame):  # Actions to modify database
                                                         text="Remove Organization",
                                                         command=self.remove_organiazation_input)
         self.remove_organization_button.grid(row=2, column=0, padx=20, pady=10)
+        self.allocation_details_button = ctk.CTkButton(self, 
+                                                       text="Allocation Details",
+                                                       command=self.show_allocation_details_input,
+                                                       fg_color="gray30")
+        self.allocation_details_button.grid(row=3, column=0, padx=20, pady=10)
         
         # Gap
-        gap_row = 3
+        gap_row = 4
         self.grid_rowconfigure(gap_row, weight=1)
         
         # Appearance Mode/Theme
@@ -53,6 +58,9 @@ class LeftSideBarFrame(ctk.CTkFrame):  # Actions to modify database
         dialog = ctk.CTkInputDialog(text="Organization Name to Remove: ", title="Removing Organization")
         self.app.database.remove_organization(self.app.database.get_organization_by_name(dialog.get_input()))
         self.app.reset_search_results()
+        
+    def show_allocation_details_input(self):
+        pass
 
     def change_appearance_mode_event(self, new_appearance_mode: str):
         ctk.set_appearance_mode(new_appearance_mode)
@@ -68,7 +76,7 @@ class RightSideBarFrame(ctk.CTkFrame):  # Shows information on selected item
 
         # create textbox
         self.textbox = ctk.CTkTextbox(self, 
-                                      width=250)
+                                      width=350)
         self.update_textbox()
         self.textbox.configure(state="disabled")
         self.grid_rowconfigure(0, weight=1)
@@ -83,21 +91,34 @@ class RightSideBarFrame(ctk.CTkFrame):  # Shows information on selected item
             if isinstance(self.app.info_display, IPAddress):
                 ip_address = self.app.info_display
                 ip_address_block = IPAddressBlock(ip_address.get_network_address())
-                print(ip_address_block.ip_address)
-                display_str = (f"IP Address\n\n{ip_address}\n"
-                               + ("\n\nThis is not a network address, no information about a network can be inferred\n" 
-                                  if ip_address.subnet_mask_length == 0 else ""
-                                  + f"\n\nNetwork Address: {ip_address.get_network_address()} \n\nHost Address: {ip_address.get_host_address()}"
-                                  + f"\n\nSubnet Mask: {ip_address.get_subnet_mask()}"
-                                  + f"\n\nTotal Addresses in Network: {ip_address_block.get_num_usable_addresses()}"
-                                  + f"\n\nUsable Host Addresses in Network: {ip_address_block.get_num_usable_addresses() - 2}"
-                                  + f"\n\nUsable Host Address Range: \n{ip_address_block.get_lower_bound_address()} - {ip_address_block.get_upper_bound_address()}"
-                                  + f"\n\nBroadcast Address: {ip_address_block.get_broadcast_address()}"
-                               ))
+                display_str = (
+                    f"IP Address\n\n{ip_address}\n"
+                    + ("\n\nThis is not a network address, no information about a network can be inferred\n" 
+                        if ip_address.subnet_mask_length == 0 else ""
+                        + f"\n\nNetwork Address: {ip_address.get_network_address()} \n\nHost Address: {ip_address.get_host_address()}"
+                        + f"\n\nSubnet Mask: {ip_address.get_subnet_mask()}"
+                        + f"\n\nTotal Addresses in Network: {ip_address_block.get_num_usable_addresses()}"
+                        + f"\n\nUsable Host Addresses in Network: {ip_address_block.get_num_usable_addresses() - 2}"
+                        + f"\n\nUsable Host Address Range: \n{ip_address_block.get_lower_bound_address()} - {ip_address_block.get_upper_bound_address()}"
+                        + f"\n\nBroadcast Address: {ip_address_block.get_broadcast_address()}"
+                    )
+                )
                 self.textbox.insert("0.0", display_str)
             elif isinstance(self.app.info_display, IPAddressBlock):
-                self.textbox.insert("0.0", "IP Address Block\n\n"
-                                    + str(self.app.info_display))
+                ip_address_block = self.app.info_display
+                display_str = (
+                    f"IP Address Block (Network)\n\n{ip_address_block.get_identity_address()}\n"
+                    + ("\n\nThis is not a network address, no information about a network can be inferred\n" 
+                        if ip_address_block.get_identity_address().subnet_mask_length == 0 else ""
+                        + f"\n\nNetwork Address: {ip_address_block.get_identity_address()}"
+                        + f"\n\nSubnet Mask: {ip_address_block.get_identity_address().get_subnet_mask()}"
+                        + f"\n\nTotal Addresses in Network: {ip_address_block.get_num_usable_addresses()}"
+                        + f"\n\nUsable Host Addresses in Network: {ip_address_block.get_num_usable_addresses() - 2}"
+                        + f"\n\nUsable Host Address Range: \n{ip_address_block.get_lower_bound_address()} - {ip_address_block.get_upper_bound_address()}"
+                        + f"\n\nBroadcast Address: {ip_address_block.get_broadcast_address()}"
+                    )
+                )
+                self.textbox.insert("0.0", display_str)
             elif isinstance(self.app.info_display, Organization):
                 self.textbox.insert("0.0", "Organization\n\n"
                                     + str(self.app.info_display))
@@ -146,7 +167,8 @@ class NetworkCardFrame(ctk.CTkFrame):  # Acts as a card displaying information o
         self.select_button = ctk.CTkButton(master=self,
                                            text_color=("gray10", "#DCE4EE"),
                                            command=self.select_input,
-                                           text="Select")
+                                           text="Select",
+                                           fg_color="gray30")
         self.select_button.grid(row=0, column=1, padx=(10, 10), pady=(10, 10), sticky="nse")
     
     def select_input(self):
@@ -162,14 +184,16 @@ class OrganizationCardFrame(ctk.CTkFrame):  # Acts as a card displaying informat
         
         # Organization Name
         self.label = ctk.CTkLabel(self,
-                                  text=organization.name)
+                                  text=organization.name,
+                                  font=ctk.CTkFont(size=16, weight="bold"))
         self.label.grid(row=0, column=0, columnspan=2, padx=(20, 20), pady=(20, 20), sticky="nsw")
         
         # Select Button
         self.select_button = ctk.CTkButton(master=self,
                                            text_color=("gray10", "#DCE4EE"),
                                            command=self.select_input,
-                                           text="Select")
+                                           text="Select",
+                                           fg_color="gray30")
         self.select_button.grid(row=0, column=2, padx=(20, 20), pady=(20, 20), sticky="nse")
         
         # Network Database Actions
@@ -183,6 +207,12 @@ class OrganizationCardFrame(ctk.CTkFrame):  # Acts as a card displaying informat
                                                    command=self.remove_network_input,
                                                    text="Remove Network")
         self.remove_network_button.grid(row=1, column=1, padx=(10, 10), pady=(10, 10), sticky="nsw")
+        
+        # List title
+        self.label = ctk.CTkLabel(self,
+                                  text="Networks (Allocated IP Address Blocks)",
+                                  font=ctk.CTkFont(size=16))
+        self.label.grid(row=2, column=0, columnspan=2, padx=(10, 10), pady=(10, 0), sticky="nsw")
         
         # Network Cards
         self.network_card_frames: list[NetworkCardFrame] = []
@@ -222,7 +252,7 @@ class OrganizationCardFrame(ctk.CTkFrame):  # Acts as a card displaying informat
             self.network_card_frames.append(frame)
         
         for index, frame in enumerate(self.network_card_frames):
-            frame.grid(row=2 + index, column=0, columnspan=3, padx=(10, 10), pady=(10, 10), sticky="nsew")
+            frame.grid(row=3 + index, column=0, columnspan=3, padx=(10, 10), pady=(10, 10), sticky="nsew")
 
 class CenterFrame(ctk.CTkScrollableFrame):  # Shows database
     def __init__(self, master, **kwargs):
@@ -279,7 +309,7 @@ class App(ctk.CTk):
         
         # configure window
         self.title("IPv4DB")
-        self.geometry(f"{1100}x{580}")
+        self.geometry(f"{1300}x{780}")
 
         # configure grid layout (4x4)
         self.grid_columnconfigure(1, weight=1)
