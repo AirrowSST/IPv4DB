@@ -10,33 +10,49 @@ class LeftSideBarFrame(ctk.CTkFrame):  # Actions to modify database
         super().__init__(master, width=140, corner_radius=0, **kwargs)
         self.app: App = master
         
-        self.logo_label = ctk.CTkLabel(self, text="ctk", font=ctk.CTkFont(size=20, weight="bold"))
+        # App Name
+        self.logo_label = ctk.CTkLabel(self, text="IPv4DB", font=ctk.CTkFont(size=20, weight="bold"))
         self.logo_label.grid(row=0, column=0, padx=20, pady=(20, 10))
-        self.sidebar_button_1 = ctk.CTkButton(self, command=self.sidebar_button_event)
-        self.sidebar_button_1.grid(row=1, column=0, padx=20, pady=10)
-        self.sidebar_button_2 = ctk.CTkButton(self, command=self.sidebar_button_event)
-        self.sidebar_button_2.grid(row=2, column=0, padx=20, pady=10)
-        self.sidebar_button_3 = ctk.CTkButton(self, command=self.sidebar_button_event)
-        self.sidebar_button_3.grid(row=3, column=0, padx=20, pady=10)
-        self.sidebar_button_3.configure(state="disabled", text="Disabled CTkButton")
         
-        self.grid_rowconfigure(4, weight=1)
+        # Database Actions
+        self.add_organization_button = ctk.CTkButton(self, 
+                                              text="Add Organization",
+                                              command=self.add_organiazation_input)
+        self.add_organization_button.grid(row=1, column=0, padx=20, pady=10)
+        self.remove_organization_button = ctk.CTkButton(self, 
+                                                        text="Remove Organization",
+                                                        command=self.remove_organiazation_input)
+        self.remove_organization_button.grid(row=2, column=0, padx=20, pady=10)
         
+        # Gap
+        gap_row = 3
+        self.grid_rowconfigure(gap_row, weight=1)
+        
+        # Appearance Mode/Theme
         self.appearance_mode_label = ctk.CTkLabel(self, text="Appearance Mode:", anchor="w")
-        self.appearance_mode_label.grid(row=5, column=0, padx=20, pady=(10, 0))
+        self.appearance_mode_label.grid(row=gap_row + 1, column=0, padx=20, pady=(10, 0))
         self.appearance_mode_optionemenu = ctk.CTkOptionMenu(self, values=["Light", "Dark", "System"],
                                                                        command=self.change_appearance_mode_event)
-        self.appearance_mode_optionemenu.grid(row=6, column=0, padx=20, pady=(10, 10))
+        self.appearance_mode_optionemenu.grid(row=gap_row + 2, column=0, padx=20, pady=(10, 10))
+        self.appearance_mode_optionemenu.set("System")
+        
+        # Scaling (UI)
         self.scaling_label = ctk.CTkLabel(self, text="UI Scaling:", anchor="w")
-        self.scaling_label.grid(row=7, column=0, padx=20, pady=(10, 0))
-        self.scaling_optionemenu = ctk.CTkOptionMenu(self, values=["80%", "90%", "100%", "110%", "120%"],
+        self.scaling_label.grid(row=gap_row + 3, column=0, padx=20, pady=(10, 0))
+        self.scaling_optionemenu = ctk.CTkOptionMenu(self, values=["60%", "80%", "100%", "120%", "140%"],
                                                                command=self.change_scaling_event)
-        self.scaling_optionemenu.grid(row=8, column=0, padx=20, pady=(10, 20))
-        self.appearance_mode_optionemenu.set("Dark")
+        self.scaling_optionemenu.grid(row=gap_row + 4, column=0, padx=20, pady=(10, 20))
         self.scaling_optionemenu.set("100%")
 
-    def sidebar_button_event(self):
-        print("sidebar_button click")
+    def add_organiazation_input(self):
+        dialog = ctk.CTkInputDialog(text="Organization Name: ", title="Adding Organization")
+        self.app.database.add_organization(Organization(dialog.get_input()))
+        self.app.reset_search_results()
+        
+    def remove_organiazation_input(self):
+        dialog = ctk.CTkInputDialog(text="Organization Name: ", title="Removing Organization")
+        self.app.database.remove_organization(self.app.database.get_organization_by_name(dialog.get_input()))
+        self.app.reset_search_results()
 
     def change_appearance_mode_event(self, new_appearance_mode: str):
         ctk.set_appearance_mode(new_appearance_mode)
@@ -248,7 +264,7 @@ class App(ctk.CTk):
     def set_search_results(self, organizations):
         self.center_frame.update_all(organizations)
         
-    def remove_search_results(self):
+    def reset_search_results(self):
         self.center_frame.update_all()
 
 if __name__ == "__main__":
