@@ -202,17 +202,23 @@ class Database:
         return None
     
     def search_all(self, query):  # Searches the IP addresses in the database as well as the organization names 
-        # Search IP addresses
+        # Search IP addresses and IP address blocks
         try:
             ip_address = IPAddress(query)
         except ValueError as e:  # Not an IP address
             ip_address = None
         
         owner = None
+        owner_block = None
         if ip_address is not None:
             for organization in self.organizations:
                 if organization.owns_ip_address(ip_address):
                     owner = organization
+        if owner:
+            for block in owner.ip_address_blocks:
+                if block.contains(ip_address):
+                    owner_block = block
+                    break
         
         # Search organizations names
         matched_organizations = []
@@ -220,8 +226,8 @@ class Database:
             if query in organization.name:
                 matched_organizations.append(organization)
         
-        # Returns IP Address, owner, and matched organizations
-        return ip_address, owner, matched_organizations
+        # Returns IP Address, owner organization, the block containing the IP address, and matched organizations
+        return ip_address, owner, owner_block, matched_organizations
 
     def __repr__(self) -> str:
         return "----- DATABASE ----- \n" + "\n\n".join([str(organization) for organization in self.organizations]) + "\n\n----------------------"

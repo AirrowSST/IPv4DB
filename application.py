@@ -99,9 +99,7 @@ class BottomFrame(ctk.CTkFrame):  # Allows Searching
         self.search_entry.grid(row=0, column=0, padx=(20, 0), pady=(20, 20), sticky="nsew")
 
         # Search button
-        self.search_button = ctk.CTkButton(master=self, 
-                                           fg_color="transparent", 
-                                           border_width=2, 
+        self.search_button = ctk.CTkButton(master=self,
                                            text_color=("gray10", "#DCE4EE"),
                                            command=self.search_input,
                                            text="Search")
@@ -111,15 +109,72 @@ class BottomFrame(ctk.CTkFrame):  # Allows Searching
         ip_address, owner, organizations = self.app.database.search_all(self.search_entry.get())
         if ip_address is not None:
             self.app.set_info_display(ip_address)
+        elif owner is not None:
+            self.app.set_info_display(owner)
 
-class NetworkFrame(ctk.CTkFrame):  # Acts as a card displaying information on a network
-    def __init__(self, master, **kwargs):
+class NetworkCardFrame(ctk.CTkFrame):  # Acts as a card displaying information on a network
+    def __init__(self, master, network, **kwargs):
         super().__init__(master, **kwargs)
+        self.app: App = master
+        self.network = network
+        
+        # Network Address
+        self.label = ctk.CTkLabel(self, 
+                                  text=network.get_network_address())
+        self.label.grid(row=0, column=0, padx=(20, 20), pady=(20, 20), sticky="nsew")
+        
+        # Select Button
+        self.select_button = ctk.CTkButton(master=self,
+                                           text_color=("gray10", "#DCE4EE"),
+                                           command=self.select_input,
+                                           text="Select")
+        self.select_button.grid(row=1, column=0, padx=(20, 20), pady=(20, 20), sticky="nse")
+    
+    def select_input(self):
+        pass
+
+class OrganizationCardFrame(ctk.CTkFrame):  # Acts as a card displaying information on an organization
+    def __init__(self, master, organization, **kwargs):
+        super().__init__(master, **kwargs)
+        self.app: App = master
+        self.organization = organization
+        self.grid_columnconfigure(0, weight=1)
+        
+        # Organization Name
+        self.label = ctk.CTkLabel(self,
+                                  text=organization.name)
+        self.label.grid(row=0, column=0, padx=(20, 20), pady=(20, 20), sticky="nsw")
+        
+        # Network Cards
+        #TODO
+        
+        # Select Button
+        self.select_button = ctk.CTkButton(master=self,
+                                           text_color=("gray10", "#DCE4EE"),
+                                           command=self.select_input,
+                                           text="Select")
+        self.select_button.grid(row=1, column=0, padx=(20, 20), pady=(20, 20), sticky="nse")
+    
+    def select_input(self):
+        pass
 
 class CenterFrame(ctk.CTkScrollableFrame):  # Shows database
     def __init__(self, master, **kwargs):
         super().__init__(master, fg_color="transparent", corner_radius=0, **kwargs)
         self.app: App = master
+        self.organization_card_frames = []
+        self.grid_columnconfigure(0, weight=1)
+        self.update_all()
+
+    def update_all(self):
+        self.organization_card_frames.clear()
+        
+        for organization in self.app.database.organizations:
+            frame = OrganizationCardFrame(self, organization)
+            self.organization_card_frames.append(frame)
+        
+        for index, frame in enumerate(self.organization_card_frames):
+            frame.grid(row=index, column=0, padx=(20, 20), pady=(20, 20), sticky="nsew")
 
 class App(ctk.CTk):
     def __init__(self):
@@ -141,10 +196,15 @@ class App(ctk.CTk):
         o1 = Organization("Google", (ip1Block, ip2Block))
         o2 = Organization("Amazon", ip3Block)
         o3 = Organization("SpaceX", (ip4Block,))
+        o4 = Organization("Bala's Chicken Store")
+        o5 = Organization("SpaceY")
+        
         
         self.database.add_organization(o1)
         self.database.add_organization(o2)
         self.database.add_organization(o3)
+        self.database.add_organization(o4)
+        self.database.add_organization(o5)
         # --------------------------- SAMPLE DATA ---------------------------
         
         # configure window
