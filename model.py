@@ -9,46 +9,46 @@ class IPAddress:
         # case 1: argument is int
         if isinstance(ip_address, int):
             if not 0 <= ip_address < 2 ** 32:
-                raise Exception("Invalid IP address: IP address must be between 0 and 2^32 - 1")
+                raise ValueError("Invalid IP address: IP address must be between 0 and 2^32 - 1")
             self.ip_address = ip_address
             
         # case 2: argument is str
         elif isinstance(ip_address, str):
             if ip_address.count('/') > 1:
-                raise Exception("Invalid IP address: Only one slash allowed in CIDR notation")
+                raise ValueError("Invalid IP address: Only one slash allowed in CIDR notation")
             elif ip_address.count('/') == 1:
                 ip_address, subnet_mask_length_str = ip_address.split("/")
                 if not subnet_mask_length_str.isdigit():
-                    raise Exception("Invalid IP address: Subnet mask length must be an integer")
+                    raise ValueError("Invalid IP address: Subnet mask length must be an integer")
                 elif not 0 <= int(subnet_mask_length_str) <= 32:
-                    raise Exception("Invalid IP address: Subnet mask length must be between 0 and 32 (inclusive)")
+                    raise ValueError("Invalid IP address: Subnet mask length must be between 0 and 32 (inclusive)")
                 self.subnet_mask_length = int(subnet_mask_length_str)
             if ip_address.count(".") == 3:
                 for octet in ip_address.split('.'):
                     if not octet.isdigit():
-                        raise Exception("Invalid IP address: Each octet separated by a '.' must be an integer")
+                        raise ValueError("Invalid IP address: Each octet separated by a '.' must be an integer")
                     if len(octet) == 8:  # assume in binary form
                         if not 0 <= int(octet, 2) < 255:
-                            raise Exception("Invalid IP address: Binary octets separated by a '.' must be between 0 and 255 (inclusive)")
+                            raise ValueError("Invalid IP address: Binary octets separated by a '.' must be between 0 and 255 (inclusive)")
                         self.ip_address = self.ip_address * 256 + int(octet, 2)
                     elif len(octet) > 3:  # assume in wrong binary form
-                        raise Exception("Invalid IP address: Binary octets separated by a '.' must have 8 bits each")
+                        raise ValueError("Invalid IP address: Binary octets separated by a '.' must have 8 bits each")
                     else:  # if decimal
                         if not 0 <= int(octet) < 255:
-                            raise Exception("Invalid IP address: Decimal octets separated by a '.' must be between 0 and 255 (inclusive)")
+                            raise ValueError("Invalid IP address: Decimal octets separated by a '.' must be between 0 and 255 (inclusive)")
                         self.ip_address = self.ip_address * 256 + int(octet)
             else:
                 if not ip_address.isdigit():
-                    raise Exception("Invalid IP address: IP address must be an integer, either in binary or in decimal")
+                    raise ValueError("Invalid IP address: IP address must be an integer, either in binary or in decimal")
                 if len(ip_address) == 32:  # assume in binary form
                     if not 0 <= int(ip_address, 2) < 2 ** 32:
-                        raise Exception("Invalid IP address: Binary IP address must be between 0 and 2^32 - 1")
+                        raise ValueError("Invalid IP address: Binary IP address must be between 0 and 2^32 - 1")
                     self.ip_address = int(ip_address, 2)
                 elif len(ip_address) > 10:  # assume in wrong binary form
-                    raise Exception("Invalid IP address: Binary IP address must have 32 bits")
+                    raise ValueError("Invalid IP address: Binary IP address must have 32 bits")
                 else: # assume decimal
                     if not 0 <= int(ip_address) < 2 ** 32:
-                        raise Exception("Invalid IP address: Decimal IP address must be between 0 and 2^32 - 1")
+                        raise ValueError("Invalid IP address: Decimal IP address must be between 0 and 2^32 - 1")
                     self.ip_address = int(ip_address)
                 
         # case 3: argument is IPAdress
@@ -58,7 +58,7 @@ class IPAddress:
             
         # case 4: argument is of invalid type
         else:
-            raise Exception("Invalid argument type")
+            raise ValueError("Invalid argument type")
         
     def get_subnet_mask(self) -> 'IPAddress':
         return IPAddress(2 ** 32 - 2 ** (32 - self.subnet_mask_length))
@@ -162,6 +162,12 @@ class Organization:
         self.name: str = name
         self.ip_address_blocks: list[IPAddressBlock] = list(ip_address_blocks) if ip_address_blocks is not None else []
     
+    def owns_ip_address(self, ip_address: IPAddress) -> bool:
+        for block in self.ip_address_blocks:
+            if block.contains(ip_address):
+                return True
+        return False
+    
     def total_usable_ip_addresses(self) -> int:
         return sum([block.get_num_usable_addresses() for block in self.ip_address_blocks])
     
@@ -190,12 +196,23 @@ class Database:
                 return organization
         return None
     
-    def search_all(self, query):
-        # search IP addresses
+    def search_all(self, query):  # Searches the IP addresses in the database as well as the organization names 
+        # Search IP addresses
+        try:
+            ip_address = IPAddress(query)
+        except ValueError as e:  # Not an IP address
+            ip_address = None
         
+        owner = None
+        if ip_address is not None:
+            for organization in self.organizations:
+                if organization.owns_ip_address(ip_address):
+                    owner = organization
         
-        # search organizations
+        # Search organizations names
         matched_organizations = []
         for organization in self.organizations:
             if query in organization.name:
                 matched_organizations.append(organization)
+        
+        return owner, matched_organizations
