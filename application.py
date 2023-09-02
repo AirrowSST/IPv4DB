@@ -1,14 +1,14 @@
 from tkinter import IntVar
 import customtkinter as ctk
+from model import Database
 
 ctk.set_appearance_mode("System")  # Modes: "System" (standard), "Dark", "Light"
 ctk.set_default_color_theme("blue")  # Themes: "blue" (standard), "green", "dark-blue"
 
-class LeftSideBarFrame(ctk.CTkFrame):
+class LeftSideBarFrame(ctk.CTkFrame):  # Actions to modify database
     def __init__(self, master, **kwargs):
         super().__init__(master, width=140, corner_radius=0, **kwargs)
         self.app = master
-        
         
         self.logo_label = ctk.CTkLabel(self, text="ctk", font=ctk.CTkFont(size=20, weight="bold"))
         self.logo_label.grid(row=0, column=0, padx=20, pady=(20, 10))
@@ -45,39 +45,39 @@ class LeftSideBarFrame(ctk.CTkFrame):
         new_scaling_float = int(new_scaling.replace("%", "")) / 100
         ctk.set_widget_scaling(new_scaling_float)
 
-class RightSideBarFrame(ctk.CTkScrollableFrame):
+class RightSideBarFrame(ctk.CTkFrame):  # Shows information on selected item
     def __init__(self, master, **kwargs):
-        super().__init__(master, width=140, corner_radius=0, **kwargs)
+        super().__init__(master, corner_radius=0, **kwargs)
         self.app = master
-
-class App(ctk.CTk):
-    def __init__(self):
-        super().__init__()
-
-        # configure window
-        self.title("ctk complex_example.py")
-        self.geometry(f"{1100}x{580}")
-
-        # configure grid layout (4x4)
-        self.grid_columnconfigure(1, weight=1)
-        self.grid_columnconfigure((2, 3), weight=0)
-        self.grid_rowconfigure((0, 1, 2), weight=1)
-
-        # create sidebar frame with widgets
-        self.sidebar_frame = LeftSideBarFrame(self)
-        self.sidebar_frame.grid(row=0, column=0, rowspan=4, sticky="nsew")
-
-        # create main entry and button
-        self.entry = ctk.CTkEntry(self, placeholder_text="CTkEntry")
-        self.entry.grid(row=3, column=1, columnspan=2, padx=(20, 0), pady=(20, 20), sticky="nsew")
-
-        self.main_button_1 = ctk.CTkButton(master=self, fg_color="transparent", border_width=2, text_color=("gray10", "#DCE4EE"))
-        self.main_button_1.grid(row=3, column=3, padx=(20, 20), pady=(20, 20), sticky="nsew")
 
         # create textbox
         self.textbox = ctk.CTkTextbox(self, width=250)
-        self.textbox.grid(row=0, column=1, padx=(20, 0), pady=(20, 0), sticky="nsew")
+        self.textbox.grid(row=0, column=1, padx=(20, 20), pady=(20, 0), sticky="nsew")
+        self.textbox.insert("0.0", "CTkTextbox\n\n" + "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua.\n\n" * 20)
+        
+class BottomFrame(ctk.CTkFrame):  # Allows Searching
+    def __init__(self, master, **kwargs):
+        super().__init__(master, corner_radius=0, **kwargs)
+        self.app = master
+        
+        self.entry = ctk.CTkEntry(self, placeholder_text="Search")
+        self.grid_columnconfigure(0, weight=1)
+        self.entry.grid(row=0, column=0, padx=(20, 0), pady=(20, 20), sticky="nsew")
 
+        self.main_button_1 = ctk.CTkButton(master=self, fg_color="transparent", border_width=2, text_color=("gray10", "#DCE4EE"))
+        self.main_button_1.grid(row=0, column=1, padx=(20, 20), pady=(20, 20), sticky="nsew")
+
+class NetworkFrame(ctk.CTkFrame):  # Acts as a card displaying information on a network
+    def __init__(self, master, **kwargs):
+        super().__init__(master, **kwargs)
+
+class CenterFrame(ctk.CTkScrollableFrame):  # Shows database
+    def __init__(self, master, **kwargs):
+        super().__init__(master, fg_color="transparent", corner_radius=0, **kwargs)
+        self.app = master
+        
+        
+        
         # create tabview
         self.tabview = ctk.CTkTabview(self, width=250)
         self.tabview.grid(row=0, column=2, padx=(20, 0), pady=(20, 0), sticky="nsew")
@@ -99,77 +99,39 @@ class App(ctk.CTk):
         self.label_tab_2 = ctk.CTkLabel(self.tabview.tab("Tab 2"), text="CTkLabel on Tab 2")
         self.label_tab_2.grid(row=0, column=0, padx=20, pady=20)
 
-        # create radiobutton frame
-        self.radiobutton_frame = ctk.CTkFrame(self)
-        self.radiobutton_frame.grid(row=0, column=3, padx=(20, 20), pady=(20, 0), sticky="nsew")
-        self.radio_var = IntVar(value=0)
-        self.label_radio_group = ctk.CTkLabel(master=self.radiobutton_frame, text="CTkRadioButton Group:")
-        self.label_radio_group.grid(row=0, column=2, columnspan=1, padx=10, pady=10, sticky="")
-        self.radio_button_1 = ctk.CTkRadioButton(master=self.radiobutton_frame, variable=self.radio_var, value=0)
-        self.radio_button_1.grid(row=1, column=2, pady=10, padx=20, sticky="n")
-        self.radio_button_2 = ctk.CTkRadioButton(master=self.radiobutton_frame, variable=self.radio_var, value=1)
-        self.radio_button_2.grid(row=2, column=2, pady=10, padx=20, sticky="n")
-        self.radio_button_3 = ctk.CTkRadioButton(master=self.radiobutton_frame, variable=self.radio_var, value=2)
-        self.radio_button_3.grid(row=3, column=2, pady=10, padx=20, sticky="n")
-
-        # create slider and progressbar frame
-        self.slider_progressbar_frame = ctk.CTkFrame(self, fg_color="transparent")
-        self.slider_progressbar_frame.grid(row=1, column=1, padx=(20, 0), pady=(20, 0), sticky="nsew")
-        self.slider_progressbar_frame.grid_columnconfigure(0, weight=1)
-        self.slider_progressbar_frame.grid_rowconfigure(4, weight=1)
-        self.seg_button_1 = ctk.CTkSegmentedButton(self.slider_progressbar_frame)
-        self.seg_button_1.grid(row=0, column=0, padx=(20, 10), pady=(10, 10), sticky="ew")
-        self.progressbar_1 = ctk.CTkProgressBar(self.slider_progressbar_frame)
-        self.progressbar_1.grid(row=1, column=0, padx=(20, 10), pady=(10, 10), sticky="ew")
-        self.progressbar_2 = ctk.CTkProgressBar(self.slider_progressbar_frame)
-        self.progressbar_2.grid(row=2, column=0, padx=(20, 10), pady=(10, 10), sticky="ew")
-        self.slider_1 = ctk.CTkSlider(self.slider_progressbar_frame, from_=0, to=1, number_of_steps=4)
-        self.slider_1.grid(row=3, column=0, padx=(20, 10), pady=(10, 10), sticky="ew")
-        self.slider_2 = ctk.CTkSlider(self.slider_progressbar_frame, orientation="vertical")
-        self.slider_2.grid(row=0, column=1, rowspan=5, padx=(10, 10), pady=(10, 10), sticky="ns")
-        self.progressbar_3 = ctk.CTkProgressBar(self.slider_progressbar_frame, orientation="vertical")
-        self.progressbar_3.grid(row=0, column=2, rowspan=5, padx=(10, 20), pady=(10, 10), sticky="ns")
-
-        # create scrollable frame
-        self.scrollable_frame = ctk.CTkScrollableFrame(self, label_text="CTkScrollableFrame")
-        self.scrollable_frame.grid(row=1, column=2, padx=(20, 0), pady=(20, 0), sticky="nsew")
-        self.scrollable_frame.grid_columnconfigure(0, weight=1)
-        self.scrollable_frame_switches = []
-        for i in range(100):
-            switch = ctk.CTkSwitch(master=self.scrollable_frame, text=f"CTkSwitch {i}")
-            switch.grid(row=i, column=0, padx=10, pady=(0, 20))
-            self.scrollable_frame_switches.append(switch)
-
-        # create checkbox and switch frame
-        self.checkbox_slider_frame = ctk.CTkFrame(self)
-        self.checkbox_slider_frame.grid(row=1, column=3, padx=(20, 20), pady=(20, 0), sticky="nsew")
-        self.checkbox_1 = ctk.CTkCheckBox(master=self.checkbox_slider_frame)
-        self.checkbox_1.grid(row=1, column=0, pady=(20, 0), padx=20, sticky="n")
-        self.checkbox_2 = ctk.CTkCheckBox(master=self.checkbox_slider_frame)
-        self.checkbox_2.grid(row=2, column=0, pady=(20, 0), padx=20, sticky="n")
-        self.checkbox_3 = ctk.CTkCheckBox(master=self.checkbox_slider_frame)
-        self.checkbox_3.grid(row=3, column=0, pady=20, padx=20, sticky="n")
-
-        # set default values
-        self.checkbox_3.configure(state="disabled")
-        self.checkbox_1.select()
-        self.scrollable_frame_switches[0].select()
-        self.scrollable_frame_switches[4].select()
-        self.radio_button_3.configure(state="disabled")
-        self.optionmenu_1.set("CTkOptionmenu")
-        self.combobox_1.set("CTkComboBox")
-        self.slider_1.configure(command=self.progressbar_2.set)
-        self.slider_2.configure(command=self.progressbar_3.set)
-        self.progressbar_1.configure(mode="indeterminnate")
-        self.progressbar_1.start()
-        self.textbox.insert("0.0", "CTkTextbox\n\n" + "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua.\n\n" * 20)
-        self.seg_button_1.configure(values=["CTkSegmentedButton", "Value 2", "Value 3"])
-        self.seg_button_1.set("Value 2")
-
     def open_input_dialog_event(self):
         dialog = ctk.CTkInputDialog(text="Type in a number:", title="CTkInputDialog")
         print("CTkInputDialog:", dialog.get_input())
 
+class App(ctk.CTk):
+    def __init__(self):
+        super().__init__()
+        
+        self.database = Database()
+
+        # configure window
+        self.title("IPv4DB")
+        self.geometry(f"{1100}x{580}")
+
+        # configure grid layout (4x4)
+        self.grid_columnconfigure(1, weight=1)
+        self.grid_rowconfigure(0, weight=1)
+
+        # left sidebar frame
+        self.left_sidebar_frame = LeftSideBarFrame(self)
+        self.left_sidebar_frame.grid(row=0, column=0, rowspan=2, sticky="nsew")
+
+        # right sidebar frame
+        self.left_sidebar_frame = RightSideBarFrame(self)
+        self.left_sidebar_frame.grid(row=0, column=2, rowspan=2, sticky="nsew")
+        
+        # center frame
+        self.center_frame = CenterFrame(self)
+        self.center_frame.grid(row=0, column=1, sticky="nsew")
+
+        # bottom frame
+        self.bottom_frame = BottomFrame(self)
+        self.bottom_frame.grid(row=1, column=1, sticky="nsew")
 
 if __name__ == "__main__":
     app = App()
