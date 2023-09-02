@@ -8,7 +8,7 @@ ctk.set_default_color_theme("blue")  # Themes: "blue" (standard), "green", "dark
 class LeftSideBarFrame(ctk.CTkFrame):  # Actions to modify database
     def __init__(self, master, **kwargs):
         super().__init__(master, width=140, corner_radius=0, **kwargs)
-        self.app = master
+        self.app: App = master
         
         self.logo_label = ctk.CTkLabel(self, text="ctk", font=ctk.CTkFont(size=20, weight="bold"))
         self.logo_label.grid(row=0, column=0, padx=20, pady=(20, 10))
@@ -48,19 +48,19 @@ class LeftSideBarFrame(ctk.CTkFrame):  # Actions to modify database
 class RightSideBarFrame(ctk.CTkFrame):  # Shows information on selected item
     def __init__(self, master, **kwargs):
         super().__init__(master, corner_radius=0, **kwargs)
-        self.app = master
+        self.app: App = master
 
         # create textbox
         self.textbox = ctk.CTkTextbox(self, width=250)
         self.textbox.grid(row=0, column=1, padx=(20, 20), pady=(20, 0), sticky="nsew")
-        self.textbox.insert("0.0", "CTkTextbox\n\n" + "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua.\n\n" * 20)
+        self.textbox.insert("0.0", "CTkTextbox\n\n" + "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua.\n\n" * 1)
         
 class BottomFrame(ctk.CTkFrame):  # Allows Searching
     def __init__(self, master, **kwargs):
         super().__init__(master, corner_radius=0, **kwargs)
-        self.app = master
+        self.app: App = master
         
-        self.entry = ctk.CTkEntry(self, placeholder_text="Search")
+        self.entry = ctk.CTkEntry(self, placeholder_text="Search IP Address, Network or Orgnization")
         self.grid_columnconfigure(0, weight=1)
         self.entry.grid(row=0, column=0, padx=(20, 0), pady=(20, 20), sticky="nsew")
 
@@ -74,34 +74,7 @@ class NetworkFrame(ctk.CTkFrame):  # Acts as a card displaying information on a 
 class CenterFrame(ctk.CTkScrollableFrame):  # Shows database
     def __init__(self, master, **kwargs):
         super().__init__(master, fg_color="transparent", corner_radius=0, **kwargs)
-        self.app = master
-        
-        
-        
-        # create tabview
-        self.tabview = ctk.CTkTabview(self, width=250)
-        self.tabview.grid(row=0, column=2, padx=(20, 0), pady=(20, 0), sticky="nsew")
-        self.tabview.add("CTkTabview")
-        self.tabview.add("Tab 2")
-        self.tabview.add("Tab 3")
-        self.tabview.tab("CTkTabview").grid_columnconfigure(0, weight=1)  # configure grid of individual tabs
-        self.tabview.tab("Tab 2").grid_columnconfigure(0, weight=1)
-
-        self.optionmenu_1 = ctk.CTkOptionMenu(self.tabview.tab("CTkTabview"), dynamic_resizing=False,
-                                                        values=["Value 1", "Value 2", "Value Long Long Long"])
-        self.optionmenu_1.grid(row=0, column=0, padx=20, pady=(20, 10))
-        self.combobox_1 = ctk.CTkComboBox(self.tabview.tab("CTkTabview"),
-                                                    values=["Value 1", "Value 2", "Value Long....."])
-        self.combobox_1.grid(row=1, column=0, padx=20, pady=(10, 10))
-        self.string_input_button = ctk.CTkButton(self.tabview.tab("CTkTabview"), text="Open CTkInputDialog",
-                                                           command=self.open_input_dialog_event)
-        self.string_input_button.grid(row=2, column=0, padx=20, pady=(10, 10))
-        self.label_tab_2 = ctk.CTkLabel(self.tabview.tab("Tab 2"), text="CTkLabel on Tab 2")
-        self.label_tab_2.grid(row=0, column=0, padx=20, pady=20)
-
-    def open_input_dialog_event(self):
-        dialog = ctk.CTkInputDialog(text="Type in a number:", title="CTkInputDialog")
-        print("CTkInputDialog:", dialog.get_input())
+        self.app: App = master
 
 class App(ctk.CTk):
     def __init__(self):
