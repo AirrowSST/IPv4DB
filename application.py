@@ -45,12 +45,12 @@ class LeftSideBarFrame(ctk.CTkFrame):  # Actions to modify database
         self.scaling_optionemenu.set("100%")
 
     def add_organiazation_input(self):
-        dialog = ctk.CTkInputDialog(text="Organization Name: ", title="Adding Organization")
+        dialog = ctk.CTkInputDialog(text="Organization Name to Add: ", title="Adding Organization")
         self.app.database.add_organization(Organization(dialog.get_input()))
         self.app.reset_search_results()
         
     def remove_organiazation_input(self):
-        dialog = ctk.CTkInputDialog(text="Organization Name: ", title="Removing Organization")
+        dialog = ctk.CTkInputDialog(text="Organization Name to Remove: ", title="Removing Organization")
         self.app.database.remove_organization(self.app.database.get_organization_by_name(dialog.get_input()))
         self.app.reset_search_results()
 
@@ -158,27 +158,58 @@ class OrganizationCardFrame(ctk.CTkFrame):  # Acts as a card displaying informat
         self.app: App = app
         self.master = master
         self.organization: Organization = organization
-        self.grid_columnconfigure(0, weight=1)
+        self.grid_columnconfigure(1, weight=1)
         
         # Organization Name
         self.label = ctk.CTkLabel(self,
                                   text=organization.name)
-        self.label.grid(row=0, column=0, padx=(20, 20), pady=(20, 20), sticky="nsw")
-        
-        # Network Cards
-        self.network_card_frames: list[NetworkCardFrame] = []
-        self.row_start = 1
-        self.update_network_frames()
+        self.label.grid(row=0, column=0, columnspan=2, padx=(20, 20), pady=(20, 20), sticky="nsw")
         
         # Select Button
         self.select_button = ctk.CTkButton(master=self,
                                            text_color=("gray10", "#DCE4EE"),
                                            command=self.select_input,
                                            text="Select")
-        self.select_button.grid(row=0, column=1, padx=(20, 20), pady=(20, 20), sticky="nse")
+        self.select_button.grid(row=0, column=2, padx=(20, 20), pady=(20, 20), sticky="nse")
+        
+        # Network Database Actions
+        self.add_network_button = ctk.CTkButton(master=self,
+                                                text_color=("gray10", "#DCE4EE"),
+                                                command=self.add_network_input,
+                                                text="Add Network")
+        self.add_network_button.grid(row=1, column=0, padx=(10, 10), pady=(10, 10), sticky="nsw")
+        self.remove_network_button = ctk.CTkButton(master=self,
+                                                   text_color=("gray10", "#DCE4EE"),
+                                                   command=self.remove_network_input,
+                                                   text="Remove Network")
+        self.remove_network_button.grid(row=1, column=1, padx=(10, 10), pady=(10, 10), sticky="nsw")
+        
+        # Network Cards
+        self.network_card_frames: list[NetworkCardFrame] = []
+        self.update_network_frames()
     
     def select_input(self):
         self.app.set_info_display(self.organization)
+    
+    def add_network_input(self):
+        dialog = ctk.CTkInputDialog(text="Network IP Address to Add: ", title="Adding Network")
+        try:
+            ip_address = IPAddress(dialog.get_input())
+        except ValueError as e:
+            print("Error Creating Network: ", e)
+            return
+        self.organization.add_ip_address_block(IPAddressBlock(ip_address))
+        self.update_network_frames()
+    
+    def remove_network_input(self):
+        dialog = ctk.CTkInputDialog(text="Network IP Address to Remove: ", title="Removing Network")
+        try:
+            ip_address = IPAddress(dialog.get_input())
+        except ValueError as e:
+            print("Error Creating Network: ", e)
+            return
+        self.organization.remove_ip_address_block(IPAddressBlock(ip_address))
+        self.update_network_frames()
 
     def update_network_frames(self):
         for frame in self.network_card_frames:
@@ -191,7 +222,7 @@ class OrganizationCardFrame(ctk.CTkFrame):  # Acts as a card displaying informat
             self.network_card_frames.append(frame)
         
         for index, frame in enumerate(self.network_card_frames):
-            frame.grid(row=self.row_start + index, column=0, columnspan=2, padx=(10, 10), pady=(10, 10), sticky="nsew")
+            frame.grid(row=2 + index, column=0, columnspan=3, padx=(10, 10), pady=(10, 10), sticky="nsew")
 
 class CenterFrame(ctk.CTkScrollableFrame):  # Shows database
     def __init__(self, master, **kwargs):

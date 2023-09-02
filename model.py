@@ -142,6 +142,9 @@ class IPAddressBlock:
     def contains(self, ip_address: IPAddress) -> bool:  # checks if an ip address is in the block, including identity and broadcast addresses
         return self.get_identity_address() <= ip_address <= self.get_broadcast_address()
     
+    def __eq__(self, other: object) -> bool:
+        return self.ip_address == other.ip_address
+    
     def __iter__(self):  # iterates through all addresses in the block except the network and broadcast addresses
         self.current_address = self.get_lower_bound_address()
         self.get_upper_bound_address = self.get_upper_bound_address()
