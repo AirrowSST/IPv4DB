@@ -1,6 +1,6 @@
 from tkinter import IntVar
 import customtkinter as ctk
-from model import Database
+from model import Database, IPAddress, IPAddressBlock, Organization
 
 ctk.set_appearance_mode("System")  # Modes: "System" (standard), "Dark", "Light"
 ctk.set_default_color_theme("blue")  # Themes: "blue" (standard), "green", "dark-blue"
@@ -60,12 +60,20 @@ class BottomFrame(ctk.CTkFrame):  # Allows Searching
         super().__init__(master, corner_radius=0, **kwargs)
         self.app: App = master
         
-        self.entry = ctk.CTkEntry(self, placeholder_text="Search IP Address, Network or Orgnization")
+        self.entry = ctk.CTkEntry(self, 
+                                  placeholder_text="Search IP Address, Network or Orgnization")
         self.grid_columnconfigure(0, weight=1)
         self.entry.grid(row=0, column=0, padx=(20, 0), pady=(20, 20), sticky="nsew")
 
-        self.main_button_1 = ctk.CTkButton(master=self, fg_color="transparent", border_width=2, text_color=("gray10", "#DCE4EE"))
+        self.main_button_1 = ctk.CTkButton(master=self, 
+                                           fg_color="transparent", 
+                                           border_width=2, 
+                                           text_color=("gray10", "#DCE4EE"),
+                                           command=self.search_input)
         self.main_button_1.grid(row=0, column=1, padx=(20, 20), pady=(20, 20), sticky="nsew")
+
+    def search_input(self):  # handles search input action
+        print(self.app.database.search_all(self.entry.get()))
 
 class NetworkFrame(ctk.CTkFrame):  # Acts as a card displaying information on a network
     def __init__(self, master, **kwargs):
@@ -81,6 +89,26 @@ class App(ctk.CTk):
         super().__init__()
         
         self.database = Database()
+        
+        # --------------------------- SAMPLE DATA ---------------------------
+        ip1 = IPAddress("155.153.45.23/24")
+        ip1Block = IPAddressBlock(ip1)
+        ip2 = IPAddress("00001111010101011110000110100101/24")
+        ip2Block = IPAddressBlock(ip2)
+        ip3 = IPAddress("96.85.162.16/22")
+        ip3Block = IPAddressBlock(ip3)
+        ip4 = IPAddress("18.1.0.0/20")
+        ip4Block = IPAddressBlock(ip4)
+
+        o1 = Organization("Google", (ip1Block, ip2Block))
+        o2 = Organization("Amazon", ip3Block)
+        o3 = Organization("SpaceX", (ip4Block,))
+        
+        self.database.add_organization(o1)
+        self.database.add_organization(o2)
+        self.database.add_organization(o3)
+        # --------------------------- SAMPLE DATA ---------------------------
+        
 
         # configure window
         self.title("IPv4DB")

@@ -221,3 +221,7 @@ class Database:
                 matched_organizations.append(organization)
         
         return owner, matched_organizations
+
+    def __repr__(self) -> str:
+        return "----- DATABASE ----- \n" + "\n\n".join([str(organization) for organization in self.organizations]) + "\n\n----------------------"
+    
