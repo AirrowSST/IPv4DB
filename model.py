@@ -160,7 +160,12 @@ class IPAddressBlock:
 class Organization:
     def __init__(self, name: str, ip_address_blocks: list[IPAddressBlock] = None):
         self.name: str = name
-        self.ip_address_blocks: list[IPAddressBlock] = list(ip_address_blocks) if ip_address_blocks is not None else []
+        if ip_address_blocks is None:
+            self.ip_address_blocks: list[IPAddressBlock] = []
+        elif isinstance(ip_address_blocks, IPAddressBlock):
+            self.ip_address_blocks: list[IPAddressBlock] = [ip_address_blocks]
+        else:
+            self.ip_address_blocks: list[IPAddressBlock] = list(ip_address_blocks)
     
     def owns_ip_address(self, ip_address: IPAddress) -> bool:
         for block in self.ip_address_blocks:
@@ -178,7 +183,7 @@ class Organization:
         self.ip_address_blocks.remove(ip_address_block)
     
     def __repr__(self):
-        return self.name + ": \n" + "\n".join([str(ip_address_block) for ip_address_block in self.ip_address_blocks])
+        return self.name + ": \n  " + "\n  ".join([str(ip_address_block) for ip_address_block in self.ip_address_blocks])
     
 class Database:
     def __init__(self):
