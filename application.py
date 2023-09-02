@@ -51,29 +51,66 @@ class RightSideBarFrame(ctk.CTkFrame):  # Shows information on selected item
         self.app: App = master
 
         # create textbox
-        self.textbox = ctk.CTkTextbox(self, width=250)
-        self.textbox.grid(row=0, column=1, padx=(20, 20), pady=(20, 0), sticky="nsew")
-        self.textbox.insert("0.0", "CTkTextbox\n\n" + "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua.\n\n" * 1)
+        self.textbox = ctk.CTkTextbox(self, 
+                                      width=250)
+        self.update_textbox()
+        self.textbox.configure(state="disabled")
+        self.grid_rowconfigure(0, weight=1)
+        self.textbox.grid(row=0, column=0, padx=(20, 20), pady=(20, 20), sticky="nsew")
+    
+    def update_textbox(self):
+        self.textbox.configure(state="normal")
+        self.textbox.delete("0.0", "end")
+        if self.app.info_display is None:
+            self.textbox.insert("0.0", "No item selected")
+        else:
+            if isinstance(self.app.info_display, IPAddress):
+                ip_address = self.app.info_display
+                ip_address_block = IPAddressBlock(ip_address.get_network_address())
+                print(ip_address_block.ip_address)
+                display_str = (f"IP Address\n\n{ip_address}\n"
+                               + ("\n\nThis is not a network address, no information about a network can be inferred\n" 
+                                  if ip_address.subnet_mask_length == 0 else ""
+                                  + f"\n\nNetwork Address: {ip_address.get_network_address()} \n\nHost Address: {ip_address.get_host_address()}"
+                                  + f"\n\nSubnet Mask: {ip_address.get_subnet_mask()}"
+                                  + f"\n\nTotal Addresses in Network: {ip_address_block.get_num_usable_addresses()}"
+                                  + f"\n\nUsable Host Addresses in Network: {ip_address_block.get_num_usable_addresses() - 2}"
+                                  + f"\n\nUsable Host Address Range: \n{ip_address_block.get_lower_bound_address()} - {ip_address_block.get_upper_bound_address()}"
+                                  + f"\n\nBroadcast Address: {ip_address_block.get_broadcast_address()}"
+                               ))
+                self.textbox.insert("0.0", display_str)
+            elif isinstance(self.app.info_display, IPAddressBlock):
+                self.textbox.insert("0.0", "IP Address Block\n\n"
+                                    + str(self.app.info_display))
+            elif isinstance(self.app.info_display, Organization):
+                self.textbox.insert("0.0", "Organization\n\n"
+                                    + str(self.app.info_display))
+        self.textbox.configure(state="disabled")
         
 class BottomFrame(ctk.CTkFrame):  # Allows Searching
     def __init__(self, master, **kwargs):
         super().__init__(master, corner_radius=0, **kwargs)
         self.app: App = master
         
-        self.entry = ctk.CTkEntry(self, 
+        # Search bar
+        self.search_entry = ctk.CTkEntry(self, 
                                   placeholder_text="Search IP Address, Network or Orgnization")
         self.grid_columnconfigure(0, weight=1)
-        self.entry.grid(row=0, column=0, padx=(20, 0), pady=(20, 20), sticky="nsew")
+        self.search_entry.grid(row=0, column=0, padx=(20, 0), pady=(20, 20), sticky="nsew")
 
-        self.main_button_1 = ctk.CTkButton(master=self, 
+        # Search button
+        self.search_button = ctk.CTkButton(master=self, 
                                            fg_color="transparent", 
                                            border_width=2, 
                                            text_color=("gray10", "#DCE4EE"),
-                                           command=self.search_input)
-        self.main_button_1.grid(row=0, column=1, padx=(20, 20), pady=(20, 20), sticky="nsew")
+                                           command=self.search_input,
+                                           text="Search")
+        self.search_button.grid(row=0, column=1, padx=(20, 20), pady=(20, 20), sticky="nsew")
 
     def search_input(self):  # handles search input action
-        print(self.app.database.search_all(self.entry.get()))
+        ip_address, owner, organizations = self.app.database.search_all(self.search_entry.get())
+        if ip_address is not None:
+            self.app.set_info_display(ip_address)
 
 class NetworkFrame(ctk.CTkFrame):  # Acts as a card displaying information on a network
     def __init__(self, master, **kwargs):
@@ -89,6 +126,7 @@ class App(ctk.CTk):
         super().__init__()
         
         self.database = Database()
+        self.info_display = None  # value holding the object whose info is to be shown
         
         # --------------------------- SAMPLE DATA ---------------------------
         ip1 = IPAddress("155.153.45.23/24")
@@ -109,7 +147,6 @@ class App(ctk.CTk):
         self.database.add_organization(o3)
         # --------------------------- SAMPLE DATA ---------------------------
         
-
         # configure window
         self.title("IPv4DB")
         self.geometry(f"{1100}x{580}")
@@ -123,8 +160,8 @@ class App(ctk.CTk):
         self.left_sidebar_frame.grid(row=0, column=0, rowspan=2, sticky="nsew")
 
         # right sidebar frame
-        self.left_sidebar_frame = RightSideBarFrame(self)
-        self.left_sidebar_frame.grid(row=0, column=2, rowspan=2, sticky="nsew")
+        self.right_sidebar_frame = RightSideBarFrame(self)
+        self.right_sidebar_frame.grid(row=0, column=2, rowspan=2, sticky="nsew")
         
         # center frame
         self.center_frame = CenterFrame(self)
@@ -133,6 +170,15 @@ class App(ctk.CTk):
         # bottom frame
         self.bottom_frame = BottomFrame(self)
         self.bottom_frame.grid(row=1, column=1, sticky="nsew")
+        self.bind("<KeyPress>", lambda event: self.bottom_frame.search_input() if event.char == "\r" else None)
+
+    def set_info_display(self, item):
+        self.info_display = item
+        self.right_sidebar_frame.update_textbox()
+    
+    def remove_info_display(self):
+        self.info_display = None
+        self.right_sidebar_frame.update_textbox()
 
 if __name__ == "__main__":
     app = App()

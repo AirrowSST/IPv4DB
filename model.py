@@ -68,10 +68,10 @@ class IPAddress:
         return IPAddress(self.ip_address, self.subnet_mask_length)
     
     def get_network_address(self) -> 'IPAddress':
-        return IPAddress(self.ip_address & self.get_subnet_mask().ip_address)
+        return IPAddress(self.ip_address & self.get_subnet_mask().ip_address, self.subnet_mask_length)
     
     def get_host_address(self) -> 'IPAddress':
-        return IPAddress(self.ip_address & ~self.get_subnet_mask().ip_address)
+        return IPAddress(self.ip_address & ~self.get_subnet_mask().ip_address, self.subnet_mask_length)
     
     def __repr__(self):
         str_digits = []
@@ -122,7 +122,7 @@ class IPAddress:
 
 class IPAddressBlock:
     def __init__(self, network_ip_address: IPAddress):
-        self.ip_address: IPAddress = network_ip_address
+        self.ip_address: IPAddress = IPAddress(network_ip_address)
         
     def get_identity_address(self) -> 'IPAddress':
         return self.ip_address.get_copy()
@@ -220,7 +220,8 @@ class Database:
             if query in organization.name:
                 matched_organizations.append(organization)
         
-        return owner, matched_organizations
+        # Returns IP Address, owner, and matched organizations
+        return ip_address, owner, matched_organizations
 
     def __repr__(self) -> str:
         return "----- DATABASE ----- \n" + "\n\n".join([str(organization) for organization in self.organizations]) + "\n\n----------------------"
